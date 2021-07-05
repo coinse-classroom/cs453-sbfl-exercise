@@ -12,33 +12,51 @@ def generate_spectrum(test_names, test_traces, covered_lines, test_results):
     test_results -- a dictionary of test pass (True)/fail (False) results 
     """
     spectrum = []
+    for line in sorted(covered_lines):
+        ep, ef, np, nf = 0, 0, 0, 0
+        for test_name in test_names:
+            trace = test_traces[test_name]
+            result = test_results[test_name]
 
-    # ...
-    
+            if line in trace["executed_lines"] and result:
+                ep += 1
+            elif line in trace["executed_lines"] and not result:
+                ef += 1
+            elif line not in trace["executed_lines"] and result:
+                np += 1
+            elif line not in trace["executed_lines"] and not result:
+                nf += 1
+        spectrum.append((line, (ep, ef, np, nf)))
     return spectrum
 
 def op2(spectrum):
     """Implements the Op2 risk evaluation formula"""
     scores = []
-
-    # ...
-    
+    for s in spectrum:
+        line, (ep, ef, np, nf) = s
+        score = ef - ep / (ep + np + 1.0)
+        scores.append((line, score))
     return scores
 
 def wong1(spectrum):
     """Implements the Wong1 risk evaluation formula"""
     scores = []
-
-    # ...
-    
+    for s in spectrum:
+        line, (ep, ef, np, nf) = s
+        score = ef
+        scores.append((line, score))
     return scores
 
 def tarantula(spectrum):
     """Implements the Tarantula risk evaluation formula"""
     scores = []
-
-    # ...
-    
+    for s in spectrum:
+        line, (ep, ef, np, nf) = s
+        try:
+            score = (ef / (ef + nf)) / (ef / (ef + nf) + ep / (ep + np))
+        except ZeroDivisionError:
+            score = 0
+        scores.append((line, score))
     return scores
 
 def ranking(scores):
@@ -66,7 +84,7 @@ def main(target_filename, test_file):
         test_traces[test_name] = coverage
 
     spectrum = generate_spectrum(test_names, test_traces, covered_lines, test_results)
-    scores = wong1(spectrum)
+    scores = tarantula(spectrum)
     ranks = ranking(scores)
 
     rows = []
