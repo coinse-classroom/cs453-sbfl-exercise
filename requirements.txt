@@ -1,3 +1,4 @@
 coverage>=5.5
 scipy>=1.6.3
 tabulate>=0.8.9
+pytest
